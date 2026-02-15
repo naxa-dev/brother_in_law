@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>이벤트 관리</h2>
+<form method="get" action="/admin/events">
+    <label for="snapshot_select">스냅샷:</label>
+    <select name="snapshot_id" id="snapshot_select" onchange="this.form.submit()">
+        {% for s in snapshots %}
+        <option value="{{ s['snapshot_id'] }}" {% if snapshot and s['snapshot_id'] == snapshot['snapshot_id'] %}selected{% endif %}>{{ s['snapshot_date'] }}</option>
+        {% endfor %}
+    </select>
+    {% if months %}
+    <label for="month_select">월:</label>
+    <select name="month" id="month_select" onchange="this.form.submit()">
+        {% for m in months %}
+        <option value="{{ m }}" {% if selected_month == m %}selected{% endif %}>{{ m }}</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+</form>
+
+{% if selected_month %}
+<table>
+    <thead><tr><th>과제ID</th><th>Champion</th><th>신규제안</th><th>승인</th><th>비고</th><th>저장</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+        <tr>
+            <form method="post" action="/admin/events/{{ e['snapshot_id'] }}/{{ e['month_key'] }}/{{ e['project_id'] }}/edit">
+                <td>{{ e['project_id'] }}</td>
+                <td>
+                    <select name="champion_id">
+                        <option value="0" {% if not e['champion_id'] %}selected{% endif %}>(미할당)</option>
+                        {% for c in champions %}
+                        <option value="{{ c['champion_id'] }}" {% if e['champion_id'] == c['champion_id'] %}selected{% endif %}>{{ c['name'] }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td><input type="checkbox" name="is_new_proposal" value="true" {% if e['is_new_proposal'] %}checked{% endif %}></td>
+                <td><input type="checkbox" name="is_approved" value="true" {% if e['is_approved'] %}checked{% endif %}></td>
+                <td><input type="text" name="note" value="{{ e['note'] or '' }}"></td>
+                <td><button type="submit">저장</button></td>
+            </form>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>선택된 스냅샷에 월 정보가 없습니다.</p>
+{% endif %}
+{% endblock %}

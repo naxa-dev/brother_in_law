@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>스냅샷 업로드</h2>
+<form action="/admin/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".xlsx" required>
+    <button type="submit">업로드</button>
+</form>
+
+{% if report %}
+<section class="report">
+    <h3>업로드 결과</h3>
+    <p>{{ report.message }}</p>
+    {% if report.success %}
+    <p>프로젝트 처리: {{ report.processed_projects }}, 이벤트 처리: {{ report.processed_events }}</p>
+    {% else %}
+    <p style="color:red;">업로드 실패</p>
+    {% endif %}
+    {% if report.warnings %}
+    <div class="warning">
+        <h4>경고</h4>
+        <ul>
+        {% for w in report.warnings %}
+            <li>{{ w }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if report.errors %}
+    <div class="errors">
+        <h4>오류</h4>
+        <ul>
+        {% for e in report.errors %}
+            <li>{{ e }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+<h2>스냅샷 목록</h2>
+<table>
+    <thead>
+        <tr><th>날짜</th><th>업로드 시간</th><th>파일명</th><th>대시보드</th><th>프로젝트</th><th>이벤트</th></tr>
+    </thead>
+    <tbody>
+    {% for s in snapshots %}
+        <tr>
+            <td>{{ s['snapshot_date'] }}</td>
+            <td>{{ s['uploaded_at'] }}</td>
+            <td>{{ s['source_filename'] }}</td>
+            <td><a href="/?snapshot_id={{ s['snapshot_id'] }}">보기</a></td>
+            <td><a href="/admin/projects?snapshot_id={{ s['snapshot_id'] }}">관리</a></td>
+            <td><a href="/admin/events?snapshot_id={{ s['snapshot_id'] }}">관리</a></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title if title else 'AX Dashboard' }}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <!-- Chart.js library for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="{{ body_class if body_class else '' }}">
+    <header class="site-header">
+        <h1>AX 과제 대시보드</h1>
+        <nav>
+            <a href="/">대시보드</a> |
+            <a href="/admin">어드민</a> |
+            <a href="/admin/projects">프로젝트 관리</a> |
+            <a href="/admin/events">이벤트 관리</a>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="site-footer">
+        <p>© 2026 AX Dashboard</p>
+    </footer>
+</body>
+</html>
