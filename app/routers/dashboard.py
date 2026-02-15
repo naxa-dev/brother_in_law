@@ -1,8 +1,11 @@
-"""
-Dashboard router for sqlite backend.
+"""Dashboard router for sqlite backend.
 
-Renders the main dashboard page with metrics and tables.
+Renders the main cockpit-style dashboard page with metrics and tables.
 """
+
+from __future__ import annotations
+
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Request, Query
 from fastapi.responses import HTMLResponse
@@ -12,13 +15,8 @@ from ..db import get_connection
 from ..services import metrics as metrics_service
 
 router = APIRouter()
-from pathlib import Path
 
-# Determine absolute template directory based on this file location.  The
-# `routers` package sits under `app/routers`, while templates live in
-# `app/templates`.  Therefore we ascend one directory above the current
-# file's directory and join the `templates` folder.  Using an absolute
-# path avoids issues when FastAPI reloader changes the working directory.
+# Determine absolute template directory based on this file location.
 templates = Jinja2Templates(directory=str((Path(__file__).resolve().parent.parent) / "templates"))
 
 
@@ -31,75 +29,98 @@ def get_conn():
 
 
 @router.get("/", response_class=HTMLResponse)
-def dashboard(request: Request,
-              snapshot_id: int = Query(None),
-              month: str = Query(None),
-              filter_champion: str = Query(None),
-              filter_strategy: str = Query(None),
-              filter_status: str = Query('승인(진행중)'),
-              conn = Depends(get_conn)):
+def dashboard(
+    request: Request,
+    snapshot_id: int = Query(None),
+    month: str = Query(None),
+    filter_champion: str = Query(None),
+    filter_strategy: str = Query(None),
+    filter_status: str = Query("승인(진행중)"),
+    conn=Depends(get_conn),
+):
     """Render dashboard page."""
+
     # Fetch snapshots list
     snapshots = conn.execute("SELECT * FROM snapshots ORDER BY snapshot_date DESC").fetchall()
     if not snapshots:
-        return templates.TemplateResponse("dashboard.html", {"request": request, "snapshots": [], "message": "No snapshots available."})
+        return templates.TemplateResponse(
+            "dashboard.html",
+            {"request": request, "snapshots": [], "message": "No snapshots available."},
+        )
+
     # Determine snapshot
     selected_snapshot = None
     if snapshot_id:
         for s in snapshots:
-            if s['snapshot_id'] == snapshot_id:
+            if s["snapshot_id"] == snapshot_id:
                 selected_snapshot = s
                 break
     if not selected_snapshot:
         selected_snapshot = snapshots[0]
+
     # Determine months
-    months = metrics_service.get_snapshot_months(conn, selected_snapshot['snapshot_id'])
+    months = metrics_service.get_snapshot_months(conn, selected_snapshot["snapshot_id"])
     selected_month = month if (month and month in months) else (months[0] if months else None)
+
     # Compute metrics and heatmap
     kpis = proposal_ranking = approval_ranking = active_ranking = distribution = heatmap = None
     max_prop = max_app = 0
     trend = {"months": [], "proposals": [], "approvals": []}
     status_dist = []
     active_by_strategy = []
+
+    # 신규 제안(월) 전략분류 비중
+    monthly_prop_strat = []
+
     if selected_month:
-        kpis = metrics_service.compute_kpis(conn, selected_snapshot['snapshot_id'], selected_month)
-        proposal_ranking, approval_ranking, active_ranking = metrics_service.compute_ranking(conn, selected_snapshot['snapshot_id'], selected_month)
-        distribution = metrics_service.compute_distribution(conn, selected_snapshot['snapshot_id'], selected_month)
-        heatmap = metrics_service.compute_heatmap(conn, selected_snapshot['snapshot_id'])
-        trend = metrics_service.compute_monthly_trend(conn, selected_snapshot['snapshot_id'])
-        status_dist = metrics_service.compute_status_distribution(conn, selected_snapshot['snapshot_id'])
-        active_by_strategy = metrics_service.compute_active_by_strategy(conn, selected_snapshot['snapshot_id'])
+        kpis = metrics_service.compute_kpis(conn, selected_snapshot["snapshot_id"], selected_month)
+        proposal_ranking, approval_ranking, active_ranking = metrics_service.compute_ranking(
+            conn, selected_snapshot["snapshot_id"], selected_month
+        )
+        distribution = metrics_service.compute_distribution(conn, selected_snapshot["snapshot_id"], selected_month)
+        heatmap = metrics_service.compute_heatmap(conn, selected_snapshot["snapshot_id"])
+        trend = metrics_service.compute_monthly_trend(conn, selected_snapshot["snapshot_id"])
+        status_dist = metrics_service.compute_status_distribution(conn, selected_snapshot["snapshot_id"])
+        active_by_strategy = metrics_service.compute_active_by_strategy(conn, selected_snapshot["snapshot_id"])
+        monthly_prop_strat = metrics_service.compute_monthly_proposals_share_by_strategy(
+            conn, selected_snapshot["snapshot_id"], selected_month
+        )
+
         # Compute maxima for heatmap
         for months_data in heatmap.values():
             for cell in months_data.values():
-                if cell['proposals'] > max_prop:
-                    max_prop = cell['proposals']
-                if cell['approvals'] > max_app:
-                    max_app = cell['approvals']
+                if cell["proposals"] > max_prop:
+                    max_prop = cell["proposals"]
+                if cell["approvals"] > max_app:
+                    max_app = cell["approvals"]
+
     # Projects list (dashboard priority): champion-grouped view of projects.
-    # Default status filter = '승인(진행중)' (Active).
     active_projects = []
     if selected_month:
         base_query = """
-            SELECT p.project_id, p.project_name, p.current_status, c.name AS champion_name, s.name AS strategy_name,
+            SELECT p.project_id, p.project_name, p.current_status,
+                   c.name AS champion_name, s.name AS strategy_name,
                    p.champion_id, p.strategy_id
             FROM projects p
             LEFT JOIN champions c ON p.champion_id = c.champion_id
             LEFT JOIN strategy_categories s ON p.strategy_id = s.strategy_id
             WHERE p.snapshot_id = ?
         """
-        params = [selected_snapshot['snapshot_id']]
+        params = [selected_snapshot["snapshot_id"]]
+
         if filter_status:
             base_query += " AND p.current_status = ?"
             params.append(filter_status)
+
         if filter_champion:
-            if filter_champion == '(미할당)':
+            if filter_champion == "(미할당)":
                 base_query += " AND p.champion_id IS NULL"
             else:
                 base_query += " AND c.name = ?"
                 params.append(filter_champion)
+
         if filter_strategy:
-            if filter_strategy == '(미할당)':
+            if filter_strategy == "(미할당)":
                 base_query += " AND p.strategy_id IS NULL"
             else:
                 base_query += " AND s.name = ?"
@@ -107,20 +128,23 @@ def dashboard(request: Request,
 
         base_query += " ORDER BY c.name IS NULL, c.name, p.project_name"
         active_projects = conn.execute(base_query, params).fetchall()
-    # Precompute arrays for the distribution chart to avoid Jinja2's map filter,
-    # which is not always available.  When distribution is None (e.g. no data),
-    # these lists remain empty and the chart will render nothing.
+
+    # Distribution arrays for chart
     dist_labels: list[str] = []
     proposals_data: list[int] = []
     approvals_data: list[int] = []
     active_data: list[int] = []
     if distribution:
         for row in distribution:
-            # row = (strategy_name, proposals, approvals, active)
             dist_labels.append(row[0])
             proposals_data.append(row[1])
             approvals_data.append(row[2])
             active_data.append(row[3])
+
+    # Proposal share by strategy arrays
+    prop_strat_labels: list[str] = [x[0] for x in monthly_prop_strat]
+    prop_strat_values: list[int] = [x[1] for x in monthly_prop_strat]
+    prop_strat_shares: list[float] = [round(x[2] * 100, 1) for x in monthly_prop_strat]
 
     # Build Top-N arrays for charts
     top_n = 10
@@ -128,8 +152,6 @@ def dashboard(request: Request,
     top_prop_values = [x[1] for x in (proposal_ranking or [])[:top_n]]
     top_app_labels = [x[0] for x in (approval_ranking or [])[:top_n]]
     top_app_values = [x[1] for x in (approval_ranking or [])[:top_n]]
-    active_labels = [x[0] for x in (active_ranking or [])[:top_n]]
-    active_values = [x[1] for x in (active_ranking or [])[:top_n]]
 
     status_labels = [x[0] for x in status_dist]
     status_values = [x[1] for x in status_dist]
@@ -147,6 +169,7 @@ def dashboard(request: Request,
             if r >= 0.5 and r > bias_ratio:
                 bias_strategy = name
                 bias_ratio = r
+
     context = {
         "request": request,
         "title": "AX Operations Cockpit",
@@ -171,8 +194,6 @@ def dashboard(request: Request,
         "top_prop_values": top_prop_values,
         "top_app_labels": top_app_labels,
         "top_app_values": top_app_values,
-        "active_labels": active_labels,
-        "active_values": active_values,
         "status_labels": status_labels,
         "status_values": status_values,
         "active_strat_labels": active_strat_labels,
@@ -186,5 +207,10 @@ def dashboard(request: Request,
         "selected_status": filter_status,
         "max_prop": max_prop,
         "max_app": max_app,
+        # 신규제안(월) 전략분류 분포
+        "prop_strat_labels": prop_strat_labels,
+        "prop_strat_values": prop_strat_values,
+        "prop_strat_shares": prop_strat_shares,
     }
+
     return templates.TemplateResponse("dashboard.html", context)
