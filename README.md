@@ -1,6 +1,6 @@
-# AX 대시보드 (AX Dashboard)
+#  PI Dashboard (Project Insight Dashboard)
 
-AX 프로젝트 관리 및 시각화를 위한 FastAPI 기반 애플리케이션입니다. 엑셀 스냅샷 업로드, 데이터 관리(CRUD), 그리고 이해관계자를 위한 인터랙티브 대시보드를 제공합니다.
+PI Dashboard는 엑셀 기반의 프로젝트 데이터를 분석하여 직관적인 통찰력을 제공하는 **프로젝트 인사이트 대시보드**입니다. 복잡한 데이터를 시각화하고 실시간으로 성과를 모니터링하여 효율적인 의사결정을 돕습니다.
 
 
 <img width="30%" alt="image" src="https://github.com/user-attachments/assets/d013923f-c385-4a5c-81d7-29ba793f6118" />
@@ -10,33 +10,33 @@ AX 프로젝트 관리 및 시각화를 위한 FastAPI 기반 애플리케이션
 <img width="30%" alt="image" src="https://github.com/user-attachments/assets/5374c0dc-cecb-4525-b045-6988ef770a5d" />
 <img width="30%" alt="image" src="https://github.com/user-attachments/assets/785bc2f2-8af0-4919-8bbc-b684d467bded" />
 
-## 주요 기능
+## 주요 기능 (Key Features)
 
-*   **엑셀 업로드**: `YYYY-MM-DD.xlsx` 형식의 스냅샷 파일을 업로드하여 데이터를 동기화합니다.
-*   **스냅샷 저장 및 관리**: 업로드된 데이터는 SQLite 데이터베이스(`db/ax.db`)에 영구 저장되며, 중복된 날짜의 데이터는 방지됩니다.
-*   **인터랙티브 대시보드**: 챔피언별 활성 프로젝트, 제안 및 승인 월간 랭킹, 주요 KPI 카드, 전략 분포도, 챔피언 활동 히트맵 등을 제공합니다.
-*   **데이터 관리(CRUD)**: 프로젝트 및 월간 이벤트를 간편한 폼을 통해 관리할 수 있으며, 모든 변경 사항은 감사 로그(Audit Log)에 기록됩니다.
-*   **시각화 차트**: Chart.js를 사용한 막대 그래프와 CSS 기반의 히트맵을 통해 데이터 인사이트를 시각적으로 제공합니다.
+*   **데이터 동기화**: `YYYY-MM-DD.xlsx` 형식의 엑셀 스냅샷을 업로드하여 대량의 프로젝트 데이터를 빠르고 정확하게 데이터베이스화합니다.
+*   **성과 모니터링 대시보드**: 
+    *   **KPI 카드**: 프로젝트 진행률, 제안 건수, 승인 현황 등 핵심 지표를 실시간 확인
+    *   **챔피언 랭킹**: 월간 제안 및 승인 실적에 따른 실시간 순위 산정
+    *   **활동 히트맵**: 팀원별 활동 강도를 시각화하여 리소스 관리 지원
+*   **효율적인 프로젝트 관리 (CRUD)**: 직관적인 웹 인터페이스를 통해 현황을 직접 수정하고 관리할 수 있으며, 이 모든 과정은 감사 로그(Audit Log)로 철저히 기록됩니다.
+*   **비주얼 인사이트**: Chart.js 기반의 동적 그래프와 세련된 UI를 통해 데이터 사이의 상관관계와 트렌드를 한눈에 파악합니다.
 
-## 실행 방법
+## 시작하기 (Getting Started)
 
-Python 3.10 이상이 설치되어 있어야 합니다.
+Python 3.10 이상의 환경이 필요합니다.
 
-1.  가상환경 설정 및 패키지 설치:
+1.  **환경 설정 및 의존성 설치**:
     ```sh
     python -m venv venv
-    # Windows
     .\venv\Scripts\activate
-    # macOS/Linux
-    # source venv/bin/activate
     pip install -r requirements.txt
     ```
 
-2.  서버 실행:
+2.  **프로그램 실행**:
     ```sh
     uvicorn app.main:app --reload
     ```
 
-3.  접속:
-    *   대시보드: `http://localhost:8000`
-    *   관리자 인터페이스: `http://localhost:8000/admin` (스냅샷 업로드 및 데이터 관리)
+3.  **접속 링크**:
+    *   **통합 대시보드**: `http://localhost:8000`
+    *   **데이터 관리 시스템**: `http://localhost:8000/admin`
+
