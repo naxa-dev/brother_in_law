@@ -1,48 +1,34 @@
-# AX Dashboard
+# AX 대시보드 (AX Dashboard)
 
-This project is a self‑contained FastAPI application for managing and visualising AX projects. It allows administrators to upload Excel snapshots, correct data through CRUD interfaces, and provides an interactive dashboard for stakeholders to monitor proposals, approvals and ongoing projects.
+AX 프로젝트 관리 및 시각화를 위한 FastAPI 기반 애플리케이션입니다. 엑셀 스냅샷 업로드, 데이터 관리(CRUD), 그리고 이해관계자를 위한 인터랙티브 대시보드를 제공합니다.
 
-## Features
+## 주요 기능
 
-* **Excel Upload**: Upload snapshot files named `YYYY-MM-DD.xlsx` with an `AX_Master` sheet and monthly sheets (e.g. `2026-02`).
-* **Snapshot Storage**: Snapshots are persisted in an SQLite database (`db/ax.db`). Duplicate dates are rejected.
-* **Dashboard**: Shows active projects by champion, monthly rankings for proposals and approvals, KPI cards, strategy distributions, and a heatmap of champion activity.
-* **CRUD Interfaces**: Manage projects and monthly events via simple forms. All changes are logged in audit logs.
-* **Charts and Heatmap**: Utilises Chart.js for bar charts and CSS for a basic heatmap.
+*   **엑셀 업로드**: `YYYY-MM-DD.xlsx` 형식의 스냅샷 파일을 업로드하여 데이터를 동기화합니다.
+*   **스냅샷 저장 및 관리**: 업로드된 데이터는 SQLite 데이터베이스(`db/ax.db`)에 영구 저장되며, 중복된 날짜의 데이터는 방지됩니다.
+*   **인터랙티브 대시보드**: 챔피언별 활성 프로젝트, 제안 및 승인 월간 랭킹, 주요 KPI 카드, 전략 분포도, 챔피언 활동 히트맵 등을 제공합니다.
+*   **데이터 관리(CRUD)**: 프로젝트 및 월간 이벤트를 간편한 폼을 통해 관리할 수 있으며, 모든 변경 사항은 감사 로그(Audit Log)에 기록됩니다.
+*   **시각화 차트**: Chart.js를 사용한 막대 그래프와 CSS 기반의 히트맵을 통해 데이터 인사이트를 시각적으로 제공합니다.
 
-## Running Locally
+## 실행 방법
 
-Ensure Python 3.10+ is installed. Then install dependencies and start the server:
+Python 3.10 이상이 설치되어 있어야 합니다.
 
-```sh
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cd ax_dashboard
-uvicorn app.main:app --reload
-```
+1.  가상환경 설정 및 패키지 설치:
+    ```sh
+    python -m venv venv
+    # Windows
+    .\venv\Scripts\activate
+    # macOS/Linux
+    # source venv/bin/activate
+    pip install -r requirements.txt
+    ```
 
-Access the dashboard at `http://localhost:8000`. Use the admin interface at `http://localhost:8000/admin` to upload snapshots and manage data.
+2.  서버 실행:
+    ```sh
+    uvicorn app.main:app --reload
+    ```
 
-## Directory Structure
-
-```
-ax_dashboard/
-├── app/
-│   ├── main.py             # FastAPI entry point
-│   ├── database.py         # SQLAlchemy engine and session
-│   ├── models.py           # ORM models
-│   ├── schemas.py          # Pydantic schemas
-│   ├── services/           # Business logic (import, metrics, audit)
-│   ├── routers/            # API and web routes
-│   ├── templates/          # Jinja2 templates
-│   └── static/             # CSS and JS assets
-├── requirements.txt        # Python dependencies
-└── README.md               # This file
-```
-
-## Notes
-
-* For CORS safety, the API and frontend are served from the same FastAPI application.
-* The default strategy categories are created when first encountered in uploads.
-* The heatmap colour intensity is proportional to the sum of proposals and approvals per cell.
+3.  접속:
+    *   대시보드: `http://localhost:8000`
+    *   관리자 인터페이스: `http://localhost:8000/admin` (스냅샷 업로드 및 데이터 관리)
